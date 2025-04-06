@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>休克微循环分期挑战赛</title>
+    <style>
+        :root {
+            --team1: #FF6B6B;
+            --team2: #4ECDC4;
+            --team3: #45B7D1;
+            --team4: #FFA07A;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        #game-container {
+            width: 95%;
+            max-width: 900px;
+            margin: 2vh auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            height: 90vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2rem;
+            background: linear-gradient(90deg, #3498db, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .team-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .team {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .team.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-1 {
+            background: var(--team1);
+        }
+
+        .team-2 {
+            background: var(--team2);
+        }
+
+        .team-3 {
+            background: var(--team3);
+        }
+
+        .team-4 {
+            background: var(--team4);
+        }
+
+        .team-score {
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+
+        .game-phase {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .active-phase {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .buzzer-btn {
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            font-weight: bold;
+            padding: 12px 20px;
+            margin: 5px;
+        }
+
+        .feedback {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+
+        .correct {
+            background: rgba(46, 204, 113, 0.15);
+            border-left: 4px solid #2ecc71;
+        }
+
+        .incorrect {
+            background: rgba(231, 76, 60, 0.15);
+            border-left: 4px solid #e74c3c;
+        }
+
+        #timer {
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 10px 0;
+            color: #e74c3c;
+        }
+
+        .phase-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .phase-table th,
+        .phase-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .phase-table th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .phase-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .feature-list {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .feature-list li {
+            margin: 5px 0;
+        }
+
+        #buzzer-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .active-team {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <div class="header">
+            <h1>休克微循环分期挑战赛</h1>
+            <div id="timer">01:00</div>
+        </div>
+
+        <div class="team-display">
+            <div class="team team-1" id="team1">
+                <div>第一组</div>
+                <div class="team-score" id="team1-score">0</div>
+            </div>
+            <div class="team team-2" id="team2">
+                <div>第二组</div>
+                <div class="team-score" id="team2-score">0</div>
+            </div>
+            <div class="team team-3" id="team3">
+                <div>第三组</div>
+                <div class="team-score" id="team3-score">0</div>
+            </div>
+            <div class="team team-4" id="team4">
+                <div>第四组</div>
+                <div class="team-score" id="team4-score">0</div>
+            </div>
+        </div>
+
+        <!-- 游戏介绍 -->
+        <div id="intro-phase" class="game-phase active-phase">
+            <h2 style="text-align: center;">休克分期核心特征</h2>
+
+            <table class="phase-table">
+                <tr>
+                    <th>特征</th>
+                    <th>缺血期（代偿期）</th>
+                    <th>淤血期（抑制期）</th>
+                    <th>衰竭期（失代偿）</th>
+                </tr>
+                <tr>
+                    <td>微循环</td>
+                    <td>微动脉痉挛<br>"少进少出"</td>
+                    <td>血流淤滞<br>"多进少出"</td>
+                    <td>微血栓形成<br>"不进不出"</td>
+                </tr>
+                <tr>
+                    <td>意识状态</td>
+                    <td>兴奋烦躁</td>
+                    <td>淡漠迟钝</td>
+                    <td>昏迷</td>
+                </tr>
+                <tr>
+                    <td>皮肤表现</td>
+                    <td>苍白湿冷</td>
+                    <td>花斑青紫</td>
+                    <td>淤斑厥冷</td>
+                </tr>
+                <tr>
+                    <td>血压变化</td>
+                    <td>收缩压正常<br>脉压&lt;30mmHg</td>
+                    <td>收缩压&lt;90mmHg</td>
+                    <td>测不出</td>
+                </tr>
+                <tr>
+                    <td>尿量</td>
+                    <td>正常下限</td>
+                    <td>&lt;30ml/h</td>
+                    <td>无尿</td>
+                </tr>
+            </table>
+
+            <div class="feature-list">
+                <h3>关键鉴别要点：</h3>
+                <ul>
+                    <li><b>缺血期→淤血期</b>：意识状态改变 + 血压下降</li>
+                    <li><b>淤血期→衰竭期</b>：皮肤淤斑出现 + 无尿</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="start-btn" style="padding: 12px 25px; font-size: 1rem;">开始挑战</button>
+            </div>
+        </div>
+
+        <!-- 双病例对比（抢答） -->
+        <div id="phase3" class="game-phase">
+            <h2>双病例对比（抢答）</h2>
+            <div class="card">
+                <p><b>病例A：</b>患者男性，45岁，因车祸致腹部外伤入院。入院时神志清楚，但烦躁不安，面色苍白，四肢湿冷。血压115/88mmHg，脉压27mmHg，心率110次/分，尿量22ml/h。</p>
+                <p><b>病例B：</b>患者女性，60岁，因急性心肌梗死入院治疗。目前患者神志淡漠，反应迟钝，皮肤呈现花斑样改变，肢端青紫。血压80/55mmHg，心率125次/分，尿量10ml/h。</p>
+                <p><b>问题：</b>两病例分别属于哪个休克分期？</p>
+            </div>
+
+            <div id="buzzer-controls-3">
+                <button class="buzzer-btn" data-team="1">第一组抢答</button>
+                <button class="buzzer-btn" data-team="2">第二组抢答</button>
+                <button class="buzzer-btn" data-team="3">第三组抢答</button>
+                <button class="buzzer-btn" data-team="4">第四组抢答</button>
+            </div>
+
+            <div id="phase3-options" style="display: none;">
+                <div class="card" data-correct="false">A. A:淤血期 B:缺血期</div>
+                <div class="card" data-correct="false">B. A:衰竭期 B:淤血期</div>
+                <div class="card" data-correct="true">C. A:缺血期 B:淤血期</div>
+                <div class="card" data-correct="false">D. A:缺血期 B:衰竭期</div>
+            </div>
+
+            <div class="feedback" id="phase3-feedback"></div>
+            <button id="phase3-next" style="display: none; margin: 10px auto;">查看结果</button>
+        </div>
+
+        <!-- 结果展示 -->
+        <div id="results-phase" class="game-phase">
+            <div style="text-align: center;">
+                <h2 style="color: #e74c3c;">挑战结束！</h2>
+
+                <div id="winner-display" style="font-size: 1.3rem; margin: 20px 0; padding: 10px;
+                    background: #f8f9fa; border-radius: 8px;"></div>
+
+                <div style="text-align: left; max-width: 500px; margin: 0 auto;">
+                    <h3>休克分期要点总结：</h3>
+                    <div class="feature-list">
+                        <p><b>缺血期识别要点：</b></p>
+                        <ul>
+                            <li>脉压减小（＜30mmHg）</li>
+                            <li>意识兴奋但四肢湿冷</li>
+                            <li>尿量在正常下限</li>
+                        </ul>
+                    </div>
+                    <div class="feature-list">
+                        <p><b>淤血期识别要点：</b></p>
+                        <ul>
+                            <li>收缩压＜90mmHg</li>
+                            <li>皮肤花斑样改变</li>
+                            <li>尿量明显减少</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button id="restart-btn" style="margin-top: 20px; padding: 12px 25px;">再来一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏核心逻辑
+        const teams = [
+            { id: 1, name: "第一组", score: 0, color: "#FF6B6B" },
+            { id: 2, name: "第二组", score: 0, color: "#4ECDC4" },
+            { id: 3, name: "第三组", score: 0, color: "#45B7D1" },
+            { id: 4, name: "第四组", score: 0, color: "#FFA07A" }
+        ];
+
+        let currentPhase = 0;
+        let timeLeft = 60;
+        let timerInterval;
+        let activeTeam = null;
+        const phases = ['intro-phase', 'phase3', 'results-phase'];
+
+        // 初始化游戏
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+        // 抢答逻辑
+        function setupBuzzerListeners(phase) {
+            const buzzerBtns = document.querySelectorAll(`#${phase} .buzzer-btn`);
+            const optionsDiv = document.getElementById(`${phase}-options`);
+
+            buzzerBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    if (activeTeam) return; // 防止重复抢答
+
+                    const teamId = parseInt(this.getAttribute('data-team'));
+                    activeTeam = teams.find(t => t.id === teamId);
+
+                    // 高亮显示抢答团队
+                    document.getElementById(`team${teamId}`).classList.add('active');
+
+                    // 显示题目选项
+                    optionsDiv.style.display = 'block';
+
+                    // 禁用其他抢答按钮
+                    buzzerBtns.forEach(b => {
+                        if (b !== this) b.disabled = true;
+                    });
+                });
+            });
+        }
+
+        // 第三关逻辑
+        setupBuzzerListeners('phase3');
+        document.querySelectorAll('#phase3-options .card').forEach(card => {
+            card.addEventListener('click', function () {
+                const isCorrect = this.getAttribute('data-correct') === 'true';
+                const feedback = document.getElementById('phase3-feedback');
+
+                if (isCorrect) {
+                    feedback.innerHTML = `
+                        ✓ <b>${activeTeam.name} 正确判断！</b><br>
+                        <u>病例A</u>：脉压27mmHg+烦躁不安+尿量22ml/h = 缺血期<br>
+                        <u>病例B</u>：收缩压80mmHg+神志淡漠+皮肤花斑+尿量10ml/h = 淤血期`;
+                    feedback.className = 'feedback correct';
+                    activeTeam.score += 3;
+                } else {
+                    feedback.innerHTML = `
+                        ✗ <b>${activeTeam.name} 回答错误。</b><br>
+                        缺血期与淤血期最关键的鉴别是：<br>
+                        • 意识状态（兴奋vs淡漠）<br>
+                        • 血压水平（正常vs下降）`;
+                    feedback.className = 'feedback incorrect';
+                    activeTeam.score -= 1;
+                }
+                updateScores();
+                document.getElementById('phase3-next').style.display = 'block';
+            });
+        });
+
+        // 开始游戏
+        function startGame() {
+            currentPhase = 1;
+            updatePhase();
+            startTimer();
+        }
+
+        // 重新开始游戏
+        function restartGame() {
+            currentPhase = 0;
+            timeLeft = 60;
+            activeTeam = null;
+            teams.forEach(team => team.score = 0);
+            updateScores();
+            updatePhase();
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = '01:00';
+            document.querySelectorAll('.game-phase').forEach(phase => {
+                phase.style.display = 'none';
+            });
+            document.getElementById('intro-phase').style.display = 'block';
+            document.querySelectorAll('.team').forEach(team => {
+                team.classList.remove('active');
+            });
+            document.getElementById('phase3-options').style.display = 'none';
+            document.getElementById('phase3-feedback').innerHTML = '';
+            document.getElementById('phase3-next').style.display = 'none';
+            document.querySelectorAll('#phase3 .buzzer-btn').forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        // 更新游戏阶段
+        function updatePhase() {
+            document.querySelectorAll('.game-phase').forEach(phase => {
+                phase.classList.remove('active-phase');
+            });
+            document.getElementById(phases[currentPhase]).classList.add('active-phase');
+        }
+
+        // 更新得分
+        function updateScores() {
+            teams.forEach(team => {
+                document.getElementById(`team${team.id}-score`).textContent = team.score;
+            });
+        }
+
+        // 开始计时
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    document.getElementById('timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // 结束游戏
+        function endGame() {
+            currentPhase = 2;
+            updatePhase();
+            const sortedTeams = teams.sort((a, b) => b.score - a.score);
+            const winners = sortedTeams.filter(team => team.score === sortedTeams[0].score);
+            let winnerText;
+            if (winners.length === 1) {
+                winnerText = `${winners[0].name} 获胜！`;
+            } else {
+                const winnerNames = winners.map(team => team.name).join('、');
+                winnerText = `${winnerNames} 并列获胜！`;
+            }
+            document.getElementById('winner-display').textContent = winnerText;
+        }
+
+        // 查看结果按钮点击事件
+        document.getElementById('phase3-next').addEventListener('click', endGame);
+    </script>
+</body>
+
+</html>    
